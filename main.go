@@ -39,5 +39,5 @@ func main() {
 	}
 
 	log.Printf("🪞 The Mirror is running on http://localhost:%s", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServeTLS(":8080", "localhost.pem", "localhost-key.pem", nil))
 }

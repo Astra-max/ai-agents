@@ -49,16 +49,12 @@ class MirrorApp {
     }
 
     bindEvents() {
-        // Start button
         this.elements.startBtn.addEventListener('click', () => this.startSession());
-
-        // Control buttons
         this.elements.pauseBtn.addEventListener('click', () => this.togglePause());
         this.elements.micBtn.addEventListener('click', () => this.toggleMute());
         this.elements.endBtn.addEventListener('click', () => this.endSimulation());
         this.elements.newSessionBtn.addEventListener('click', () => this.resetSession());
 
-        // Scenario cards
         this.elements.scenarioCards.forEach(card => {
             card.addEventListener('click', () => {
                 this.elements.scenarioCards.forEach(c => c.classList.remove('selected'));
@@ -67,22 +63,12 @@ class MirrorApp {
         });
     }
 
-    // ==================
-    // Session Management
-    // ==================
-
     async startSession() {
         try {
-            // Request microphone access
             await this.initAudio();
-
-            // Connect to WebSocket
             await this.connectWebSocket();
-
-            // Switch to simulation screen
             this.showScreen('simulation');
             this.updateStatus('Connecting to your coach...');
-
         } catch (error) {
             console.error('Failed to start session:', error);
             alert('Failed to start session. Please ensure microphone access is granted.');
@@ -90,32 +76,19 @@ class MirrorApp {
     }
 
     resetSession() {
-        // Close connections
-        if (this.ws) {
-            this.ws.close();
-        }
-        if (this.mediaStream) {
-            this.mediaStream.getTracks().forEach(track => track.stop());
-        }
-        if (this.audioContext) {
-            this.audioContext.close();
-        }
+        if (this.ws) this.ws.close();
+        if (this.mediaStream) this.mediaStream.getTracks().forEach(track => track.stop());
+        if (this.audioContext) this.audioContext.close();
 
-        // Reset state
         this.isConnected = false;
         this.isMuted = false;
         this.isPaused = false;
         this.currentPhase = 'setup';
         this.audioQueue = [];
 
-        // Show welcome screen
         this.showScreen('welcome');
         this.updateConnectionStatus('disconnected');
     }
-
-    // ==================
-    // WebSocket
-    // ==================
 
     async connectWebSocket() {
         return new Promise((resolve, reject) => {
@@ -125,7 +98,6 @@ class MirrorApp {
             this.ws = new WebSocket(wsUrl);
 
             this.ws.onopen = () => {
-                console.log('WebSocket connected');
                 this.isConnected = true;
                 this.updateConnectionStatus('connected');
                 resolve();
@@ -137,13 +109,11 @@ class MirrorApp {
             };
 
             this.ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
                 this.updateConnectionStatus('error');
                 reject(error);
             };
 
             this.ws.onclose = () => {
-                console.log('WebSocket closed');
                 this.isConnected = false;
                 this.updateConnectionStatus('disconnected');
             };
@@ -151,27 +121,20 @@ class MirrorApp {
     }
 
     handleServerMessage(message) {
-        console.log('Server message:', message.type);
-
         switch (message.type) {
             case 'audio':
                 this.handleAudioResponse(message.payload);
                 break;
-
             case 'text':
                 this.handleTextResponse(message.payload);
                 break;
-
             case 'state':
                 this.handleStateUpdate(message.payload);
                 break;
-
             case 'notification':
                 this.showNotification(message.payload.message);
                 break;
-
             case 'error':
-                console.error('Server error:', message.error);
                 this.showNotification('Error: ' + message.error);
                 break;
         }
@@ -184,11 +147,21 @@ class MirrorApp {
     }
 
     // ==================
-    // Audio Capture
+    // Audio Capture (FIXED)
     // ==================
 
     async initAudio() {
-        // Get microphone access
+        // Create audio context FIRST (user gesture)
+        this.audioContext = new AudioContext({ sampleRate: 16000 });
+
+        if (this.audioContext.state === 'suspended') {
+            await this.audioContext.resume();
+        }
+
+        // Load audio worklet
+        await this.audioContext.audioWorklet.addModule('js/audio-processor.js');
+
+        // Now request microphone access
         this.mediaStream = await navigator.mediaDevices.getUserMedia({
             audio: {
                 sampleRate: 16000,
@@ -198,30 +171,19 @@ class MirrorApp {
             }
         });
 
-        // Create audio context at 16kHz
-        this.audioContext = new AudioContext({ sampleRate: 16000 });
-
-        // Load audio worklet
-        await this.audioContext.audioWorklet.addModule('js/audio-processor.js');
-
-        // Create source from microphone
         const source = this.audioContext.createMediaStreamSource(this.mediaStream);
-
-        // Create worklet node
         this.workletNode = new AudioWorkletNode(this.audioContext, 'audio-processor');
 
-        // Handle audio data from worklet
         this.workletNode.port.onmessage = (event) => {
             if (event.data.type === 'audio' && !this.isMuted && !this.isPaused) {
-                // Convert ArrayBuffer to base64
                 const base64 = this.arrayBufferToBase64(event.data.data);
                 this.sendMessage('audio', { data: base64 });
             }
         };
 
-        // Connect: mic -> worklet
         source.connect(this.workletNode);
-        // Don't connect to destination (we don't want to hear ourselves)
+        this.workletNode.connect(this.audioContext.destination);
+        this.audioContext.destination.channelCount = 1;
     }
 
     arrayBufferToBase64(buffer) {
@@ -238,18 +200,13 @@ class MirrorApp {
     // ==================
 
     async handleAudioResponse(payload) {
-        // Decode base64 audio
         const audioData = this.base64ToArrayBuffer(payload.data);
-
-        // Add to queue
         this.audioQueue.push(audioData);
 
-        // Start playback if not already playing
         if (!this.isPlaying) {
             this.playAudioQueue();
         }
 
-        // Show speaking animation
         this.elements.aiAvatar.classList.add('speaking');
         this.elements.audioVisualizer.classList.add('active');
         this.updateStatus('Speaking...');
@@ -271,10 +228,8 @@ class MirrorApp {
 
     async playAudioChunk(arrayBuffer) {
         return new Promise((resolve) => {
-            // Create audio context for playback at 24kHz (Gemini output rate)
             const playbackContext = new AudioContext({ sampleRate: 24000 });
 
-            // Convert Int16 PCM to Float32
             const int16Array = new Int16Array(arrayBuffer);
             const float32Array = new Float32Array(int16Array.length);
 
@@ -282,11 +237,9 @@ class MirrorApp {
                 float32Array[i] = int16Array[i] / 32768.0;
             }
 
-            // Create AudioBuffer
             const audioBuffer = playbackContext.createBuffer(1, float32Array.length, 24000);
             audioBuffer.getChannelData(0).set(float32Array);
 
-            // Play
             const source = playbackContext.createBufferSource();
             source.buffer = audioBuffer;
             source.connect(playbackContext.destination);
@@ -307,14 +260,7 @@ class MirrorApp {
         return bytes.buffer;
     }
 
-    // ==================
-    // Response Handlers
-    // ==================
-
     handleTextResponse(payload) {
-        console.log('AI text:', payload.text);
-
-        // Update transcript
         const transcriptContent = this.elements.transcript.querySelector('.transcript-content');
         transcriptContent.innerHTML += `<p><strong>Coach:</strong> ${payload.text}</p>`;
         this.elements.transcript.classList.add('visible');
@@ -322,83 +268,34 @@ class MirrorApp {
     }
 
     handleStateUpdate(state) {
-        console.log('State update:', state);
         this.currentPhase = state.phase;
-
-        // Update phase indicator
-        const phaseText = this.elements.sessionIndicator.querySelector('.phase-text');
-        const phaseDot = this.elements.sessionIndicator.querySelector('.phase-dot');
-
-        phaseText.textContent = state.phase.charAt(0).toUpperCase() + state.phase.slice(1);
-        phaseDot.classList.remove('active', 'recording');
-
-        if (state.phase === 'simulation') {
-            phaseDot.classList.add('recording');
-        } else if (state.phase !== 'paused') {
-            phaseDot.classList.add('active');
-        }
-
-        // Handle phase transitions
-        if (state.phase === 'debrief') {
-            this.showScreen('debrief');
-        }
     }
-
-    // ==================
-    // Controls
-    // ==================
 
     togglePause() {
         this.isPaused = !this.isPaused;
-
-        const icon = this.elements.pauseBtn.querySelector('.control-icon');
-        icon.textContent = this.isPaused ? '▶️' : '⏸️';
-
         this.sendMessage('control', { action: this.isPaused ? 'pause' : 'resume' });
-        this.updateStatus(this.isPaused ? 'Paused' : 'Listening...');
     }
 
     toggleMute() {
         this.isMuted = !this.isMuted;
-
-        this.elements.micBtn.classList.toggle('muted', this.isMuted);
-        const icon = this.elements.micBtn.querySelector('.control-icon');
-        icon.textContent = this.isMuted ? '🔇' : '🎙️';
-
-        this.updateStatus(this.isMuted ? 'Muted' : 'Listening...');
     }
 
     endSimulation() {
         this.sendMessage('control', { action: 'end' });
     }
 
-    // ==================
-    // UI Updates
-    // ==================
-
     showScreen(screenName) {
-        // Hide all screens
         this.elements.welcomeScreen.classList.remove('active');
         this.elements.simulationScreen.classList.remove('active');
         this.elements.debriefScreen.classList.remove('active');
 
-        // Show requested screen
-        switch (screenName) {
-            case 'welcome':
-                this.elements.welcomeScreen.classList.add('active');
-                break;
-            case 'simulation':
-                this.elements.simulationScreen.classList.add('active');
-                break;
-            case 'debrief':
-                this.elements.debriefScreen.classList.add('active');
-                break;
-        }
+        if (screenName === 'welcome') this.elements.welcomeScreen.classList.add('active');
+        if (screenName === 'simulation') this.elements.simulationScreen.classList.add('active');
+        if (screenName === 'debrief') this.elements.debriefScreen.classList.add('active');
     }
 
     updateStatus(text) {
-        const statusText = this.elements.statusIndicator.querySelector('.status-text');
-        statusText.textContent = text;
+        this.elements.statusIndicator.querySelector('.status-text').textContent = text;
     }
 
     updateConnectionStatus(status) {
@@ -407,32 +304,23 @@ class MirrorApp {
 
         statusEl.classList.remove('connected', 'error', 'hidden');
 
-        switch (status) {
-            case 'connected':
-                statusEl.classList.add('connected');
-                textEl.textContent = 'Connected';
-                // Hide after 2 seconds
-                setTimeout(() => statusEl.classList.add('hidden'), 2000);
-                break;
-            case 'error':
-                statusEl.classList.add('error');
-                textEl.textContent = 'Connection error';
-                break;
-            case 'disconnected':
-                textEl.textContent = 'Disconnected';
-                break;
-            default:
-                textEl.textContent = 'Connecting...';
+        if (status === 'connected') {
+            statusEl.classList.add('connected');
+            textEl.textContent = 'Connected';
+            setTimeout(() => statusEl.classList.add('hidden'), 2000);
+        } else if (status === 'error') {
+            statusEl.classList.add('error');
+            textEl.textContent = 'Connection error';
+        } else {
+            textEl.textContent = 'Disconnected';
         }
     }
 
     showNotification(message) {
         console.log('Notification:', message);
-        // Could implement a toast notification here
     }
 }
 
-// Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.mirrorApp = new MirrorApp();
 });
