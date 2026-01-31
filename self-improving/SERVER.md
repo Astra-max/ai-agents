@@ -1,10 +1,10 @@
 Server Documentation: The Mirror Backend
+
 [======================================]
 
 This documentation covers the Go-based backend for The Mirror, a high-stakes conversation simulator. The server orchestrates real-time communication between a web frontend and the Gemini Live API via WebSockets.
 
 Architecture Overview
-<------------------->
 
 The backend is built as a stateful WebSocket server. Each client connection maintains a dedicated, persistent connection to Google's Gemini Multimodal Live API.
 
