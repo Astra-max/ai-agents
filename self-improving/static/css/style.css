@@ -13,9 +13,9 @@
     --text-secondary: #a0a0b0;
     --text-muted: #606070;
     
-    --accent-primary: #6366f1;
-    --accent-secondary: #8b5cf6;
-    --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+    --accent-primary: #e63e4c;
+    --accent-secondary: #ee305f;
+    --accent-gradient: linear-gradient(135deg, #d82332, #f65c8a, #f75555);
     
     --success: #22c55e;
     --warning: #f59e0b;
@@ -118,7 +118,7 @@ body {
 }
 
 .logo-text {
-    font-size: 6rem;
+    font-size: 4rem;
     font-weight: 600;
     background: var(--accent-gradient);
     -webkit-background-clip: text;
@@ -205,6 +205,7 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+
 }
 
 .welcome-subtitle {
