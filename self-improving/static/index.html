@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Mirror - Conversation Simulator</title>
+    <meta name="description" content="Practice difficult conversations with AI-powered roleplay coaching">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">🪞</span>
+                <span class="logo-text">Mirror</span>
+            </div>
+            <div class="session-indicator" id="sessionIndicator">
+                <span class="phase-dot"></span>
+                <span class="phase-text">Ready</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Welcome Screen -->
+            <section class="screen welcome-screen active" id="welcomeScreen">
+                <div class="welcome-content">
+                    <h1 class="welcome-title">Practice Makes <span class="gradient-text">Confident</span></h1>
+                    <p class="welcome-subtitle">Master difficult conversations through immersive AI roleplay</p>
+                    
+                    <div class="scenario-cards">
+                        <div class="scenario-card" data-scenario="salary">
+                            <span class="scenario-icon">💰</span>
+                            <h3>Salary Negotiation</h3>
+                            <p>Ask for that raise you deserve</p>
+                        </div>
+                        <div class="scenario-card" data-scenario="pitch">
+                            <span class="scenario-icon">🚀</span>
+                            <h3>Startup Pitch</h3>
+                            <p>Convince investors</p>
+                        </div>
+                        <div class="scenario-card" data-scenario="difficult">
+                            <span class="scenario-icon">💬</span>
+                            <h3>Difficult Feedback</h3>
+                            <p>Handle tough conversations</p>
+                        </div>
+                        <div class="scenario-card" data-scenario="custom">
+                            <span class="scenario-icon">✨</span>
+                            <h3>Custom Scenario</h3>
+                            <p>Design your own challenge</p>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-large" id="startBtn">
+                        <span class="btn-icon">🎙️</span>
+                        Start Session
+                    </button>
+                    
+                    <p class="permission-note">Microphone access required</p>
+                </div>
+            </section>
+
+            <!-- Simulation Screen -->
+            <section class="screen simulation-screen" id="simulationScreen">
+                <div class="simulation-container">
+                    <!-- AI Avatar -->
+                    <div class="avatar-container">
+                        <div class="avatar" id="aiAvatar">
+                            <div class="avatar-ring"></div>
+                            <div class="avatar-inner">
+                                <span class="avatar-emoji" id="avatarEmoji">🎭</span>
+                            </div>
+                        </div>
+                        <div class="character-name" id="characterName">The Mirror</div>
+                    </div>
+
+                    <!-- Audio Visualizer -->
+                    <div class="audio-visualizer" id="audioVisualizer">
+                        <div class="visualizer-bar"></div>
+                        <div class="visualizer-bar"></div>
+                        <div class="visualizer-bar"></div>
+                        <div class="visualizer-bar"></div>
+                        <div class="visualizer-bar"></div>
+                    </div>
+
+                    <!-- Status Indicator -->
+                    <div class="status-indicator" id="statusIndicator">
+                        <span class="status-text">Listening...</span>
+                    </div>
+
+                    <!-- Transcript (optional display) -->
+                    <div class="transcript" id="transcript">
+                        <div class="transcript-content"></div>
+                    </div>
+                </div>
+
+                <!-- Control Bar -->
+                <div class="control-bar">
+                    <button class="control-btn control-pause" id="pauseBtn" title="Pause">
+                        <span class="control-icon">⏸️</span>
+                    </button>
+                    <button class="control-btn control-mic" id="micBtn" title="Mute">
+                        <span class="control-icon">🎙️</span>
+                    </button>
+                    <button class="control-btn control-end" id="endBtn" title="End Simulation">
+                        <span class="control-icon">⏹️</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Debrief Screen -->
+            <section class="screen debrief-screen" id="debriefScreen">
+                <div class="debrief-container">
+                    <h2 class="debrief-title">Session Complete</h2>
+                    <div class="debrief-content" id="debriefContent">
+                        <p>Your coach is preparing feedback...</p>
+                    </div>
+                    <button class="btn btn-primary" id="newSessionBtn">
+                        <span class="btn-icon">🔄</span>
+                        Start New Session
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Connection Status -->
+        <div class="connection-status" id="connectionStatus">
+            <span class="connection-dot"></span>
+            <span class="connection-text">Connecting...</span>
+        </div>
+    </div>
+
+    <script src="js/audio-processor.js" type="module"></script>
+    <script src="js/app.js" type="module"></script>
+</body>
+</html>
