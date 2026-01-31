@@ -216,6 +216,12 @@ class MirrorApp {
         this.isPlaying = true;
 
         while (this.audioQueue.length > 0) {
+            // New logic: If paused, wait here instead of playing the next chunk
+            if (this.isPaused) {
+                await new Promise(r => setTimeout(r, 100)); 
+                continue;
+            }
+
             const audioData = this.audioQueue.shift();
             await this.playAudioChunk(audioData);
         }
@@ -271,18 +277,63 @@ class MirrorApp {
         this.currentPhase = state.phase;
     }
 
+    // Replace your existing togglePause with this:
     togglePause() {
         this.isPaused = !this.isPaused;
+        
+        // Visual Feedback
+        if (this.isPaused) {
+            this.elements.pauseBtn.textContent = 'Resume';
+            this.elements.pauseBtn.style.backgroundColor = '#ff9800'; // Orange for pause
+            this.updateStatus('Simulation Paused');
+        } else {
+            this.elements.pauseBtn.textContent = 'Pause';
+            this.elements.pauseBtn.style.backgroundColor = ''; // Reset to default
+            this.updateStatus('Listening...');
+        }
+
+        // Send control message to Go server
         this.sendMessage('control', { action: this.isPaused ? 'pause' : 'resume' });
     }
 
+    // Replace your existing toggleMute with this:
     toggleMute() {
         this.isMuted = !this.isMuted;
+        
+        // Visual Feedback
+        if (this.isMuted) {
+            this.elements.micBtn.textContent = 'Unmute Mic';
+            this.elements.micBtn.style.backgroundColor = '#f44336'; // Red for muted
+            this.updateStatus('Microphone Muted');
+        } else {
+            this.elements.micBtn.textContent = 'Mute Mic';
+            this.elements.micBtn.style.backgroundColor = ''; // Reset to default
+            this.updateStatus('Listening...');
+        }
     }
 
+    // Replace your existing endSimulation with this:
     endSimulation() {
-        this.sendMessage('control', { action: 'end' });
+    // 1. Tell the server to stop
+    this.sendMessage('control', { action: 'end' });
+    
+    // 2. Stop the local microphone and audio context
+    if (this.mediaStream) {
+        this.mediaStream.getTracks().forEach(track => track.stop());
     }
+    if (this.audioContext) {
+        this.audioContext.close();
+    }
+
+    // 3. Switch the UI back to the welcome screen
+    this.showScreen('welcome'); 
+    
+    // 4. Reset internal states so the next session starts fresh
+    this.isConnected = false;
+    this.audioQueue = [];
+    this.updateStatus('Session ended.');
+    this.updateConnectionStatus('disconnected');
+}
 
     showScreen(screenName) {
         this.elements.welcomeScreen.classList.remove('active');
