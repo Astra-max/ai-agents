@@ -2,7 +2,6 @@
 mirror
 
 # Environment files (contains secrets)
-.env
 
 # IDE
 .idea/
