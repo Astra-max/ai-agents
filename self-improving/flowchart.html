@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Mirror - System Flow</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'dark' });</script>
+    <style>
+        body { background-color: #121212; color: white; font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="mermaid">
+        graph TD
+            subgraph Browser_Client [Frontend: index.html / app.js]
+                UI[User Interface] <--> JS[app.js Logic]
+                MIC[Microphone Input] --> AP[audio-processor.js]
+                AP -->|Base64 PCM| JS
+                JS -->|WSS Message| WS_CONN((WebSocket))
+            end
+
+            subgraph Go_Backend [Backend: main.go / handler.go]
+                WS_CONN <--> HANDLER[ws.Handler]
+                HANDLER <--> MGR[session.Manager]
+                MGR -.->|Tracks Phase| PHASE{Setup / Sim / Debrief}
+            end
+
+            subgraph Google_Cloud [Gemini Live API]
+                HANDLER <-->|WSS / JSON| GEMINI[gemini.Client]
+                GEMINI <-->|Real-time Stream| GAPI[[Gemini 2.5 Flash Native Audio]]
+            end
+
+            %% Data Flow Descriptions
+            JS -- "type: 'audio' (Base64)" --> HANDLER
+            HANDLER -- "realtimeInput (PCM)" --> GEMINI
+            GAPI -- "inlineData (Audio)" --> GEMINI
+            GEMINI -- "type: 'audio' (Base64)" --> JS
+            JS -- "Web Audio API" --> SPK[Speakers]
+            
+            %% Phase Management logic
+            MGR -- "ProcessCommand: PAUSE/END" --> PHASE
+    </div>
+</body>
+</html>
