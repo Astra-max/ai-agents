@@ -1,6 +1,9 @@
-# self-improving
-
-> Auto-documented by AutoDocs ✨
+group members
+=============
+-> Sospeter Kinyanjui
+-> Daniel Keya
+-> Waore Maxwel
+-> Kevin Nambubbi
 
 ## Project Structure
 
