@@ -5,5 +5,7 @@ import (
 )
 
 func ApiRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/api", Home)
+	mux.HandleFunc("/about-page", Home)
+	mux.HandleFunc("/my-sessions", Home)
+	mux.HandleFunc("/demo", Home)
 }

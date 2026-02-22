@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	//"fmt"
+	"fmt"
 	"net/http"
 )
 
 func Home(w http.ResponseWriter, req *http.Request) {
-	//fs := http.FileServer(http.Dir("./front-app"))
+	fmt.Fprintf(w, "%s a %v page!", "This is a ", req.URL)
 }
