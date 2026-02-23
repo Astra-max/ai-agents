@@ -1,3 +1,6 @@
+/**
+ * Handles is active path
+ */
 const isActivePath = () => {
     const path = window.location.pathname
 

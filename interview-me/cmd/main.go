@@ -1,17 +1,23 @@
 package main
 
 import (
-	"app/internals/handlers"
 	"app/internals/config"
+	"app/internals/handlers"
 	"log"
 	"net/http"
 	"strings"
 )
 
 func main() {
+	/**
+	 * Handles start
+	 */
 	Start()
 }
 
+/**
+ * Handles start
+ */
 func Start() {
 	mux := http.NewServeMux()
 	c := config.Load()
